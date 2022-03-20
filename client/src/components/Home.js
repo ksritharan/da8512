@@ -62,16 +62,15 @@ const Home = ({ user, logout }) => {
     });
   };
 
-  const postMessage = (body) => {
+  const postMessage = async (body) => {
     try {
-      saveMessage(body).then(data => {
-        if (!body.conversationId) {
-          addNewConvo(body.recipientId, data.message);
-        } else {
-          addMessageToConversation(data);
-        }
-        sendMessage(data, body);
-      });
+      const data = await saveMessage(body);
+      if (!body.conversationId) {
+        addNewConvo(body.recipientId, data.message);
+      } else {
+        addMessageToConversation(data);
+      }
+      sendMessage(data, body);
     } catch (error) {
       console.error(error);
     }
@@ -82,11 +81,14 @@ const Home = ({ user, logout }) => {
       setConversations((prev) =>
         prev.map((convo) => {
           if (convo.otherUser.id === recipientId) {
-            convo.messages.push(message);
-            convo.latestMessageText = message.text;
-            convo.id = message.conversationId;
+            const convoCopy = { ...convo };
+            convoCopy.messages = [...convo.messages, message];
+            convoCopy.latestMessageText = message.text;
+            convoCopy.id = message.conversationId;
+            return convoCopy
+          } else {
+            return convo;
           }
-          return convo;
         }),
       );
     },
@@ -110,12 +112,15 @@ const Home = ({ user, logout }) => {
       setConversations((prev) =>
         prev.map((convo) => {
           if (convo.id === message.conversationId) {
-            convo.messages.push(message);
-            convo.latestMessageText = message.text;
+            const convoCopy = { ...convo };
+            convoCopy.messages = [...convo.messages, message];
+            convoCopy.latestMessageText = message.text;
+            return convoCopy;
+          } else {
+            return convo;
           }
-          return convo;
         }),
-        );
+      );
     },
     [setConversations],
   );
