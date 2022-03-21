@@ -15,6 +15,14 @@ class Conversation(utils.CustomModel):
     )
     createdAt = models.DateTimeField(auto_now_add=True, db_index=True)
     updatedAt = models.DateTimeField(auto_now=True)
+    user1LastMessageRead = models.ForeignKey(
+        "Message", on_delete=models.CASCADE, db_column="user1LastMessageReadId", 
+        related_name="+", blank=True, null=True,
+    )
+    user2LastMessageRead = models.ForeignKey(
+        "Message", on_delete=models.CASCADE, db_column="user2LastMessageReadId", 
+        related_name="+", blank=True, null=True,
+    )
 
     # find conversation given two user Ids
     def find_conversation(user1Id, user2Id):
