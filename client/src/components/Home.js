@@ -76,6 +76,11 @@ const Home = ({ user, logout }) => {
     }
   };
 
+  const readConvo = async (body) => {
+    const { data } = await axios.patch("/api/conversations", body);
+    return data;
+  }
+
   const addNewConvo = useCallback(
     (recipientId, message) => {
       setConversations((prev) =>
@@ -85,7 +90,7 @@ const Home = ({ user, logout }) => {
             convoCopy.messages = [...convo.messages, message];
             convoCopy.latestMessageText = message.text;
             convoCopy.id = message.conversationId;
-            return convoCopy
+            return convoCopy;
           } else {
             return convo;
           }
@@ -218,6 +223,7 @@ const Home = ({ user, logout }) => {
           clearSearchedUsers={clearSearchedUsers}
           addSearchedUsers={addSearchedUsers}
           setActiveChat={setActiveChat}
+          readConvo={readConvo}
         />
         <ActiveChat
           activeConversation={activeConversation}
