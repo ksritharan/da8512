@@ -37,13 +37,22 @@ class Conversations(APIView):
                 convo_dict = {
                     "id": convo.id,
                     "messages": [
-                        message.to_dict(["id", "text", "senderId", "createdAt"])
+                        message.to_dict(["id", "text", "senderId", "createdAt", "wasSeen"])
                         for message in convo.messages.all()
                     ],
                 }
 
                 # set properties for notification count and latest message preview
                 convo_dict["latestMessageText"] = convo_dict["messages"][-1]["text"]
+                convo_dict["notificationCount"] = 0
+
+                lastSeenMessageId = None
+                for message in convo_dict["messages"]:
+                    if not message["wasSeen"] and message["senderId"] != user_id:
+                        convo_dict["notificationCount"] += 1
+                    elif message["wasSeen"] and message["senderId"] == user_id:
+                        lastSeenMessageId = message["id"]
+                                                            
 
                 # set a property "otherUser" so that frontend will have easier access
                 user_fields = ["id", "username", "photoUrl"]
@@ -57,6 +66,9 @@ class Conversations(APIView):
                     convo_dict["otherUser"]["online"] = True
                 else:
                     convo_dict["otherUser"]["online"] = False
+                
+                # set lastSeenMessageId for frontEnd seen avatar
+                convo_dict["otherUser"]["lastSeenMessageId"] = lastSeenMessageId
 
                 conversations_response.append(convo_dict)
             conversations_response.sort(
