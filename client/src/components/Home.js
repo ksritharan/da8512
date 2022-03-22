@@ -76,6 +76,18 @@ const Home = ({ user, logout }) => {
     }
   };
 
+  const readConvo = async (body) => {
+    // refs #5
+    // for future can add code for socket.emit
+    // and the function should update
+    // - conversations.notificationCount
+    // - otherUser.lastmessageReadId
+    // - we should also send this request when a message is sent
+    //  and notificationCount > 0
+    const { data } = await axios.patch("/api/messages", body);
+    return data;
+  }
+
   const addNewConvo = useCallback(
     (recipientId, message) => {
       setConversations((prev) =>
@@ -218,6 +230,7 @@ const Home = ({ user, logout }) => {
           clearSearchedUsers={clearSearchedUsers}
           addSearchedUsers={addSearchedUsers}
           setActiveChat={setActiveChat}
+          readConvo={readConvo}
         />
         <ActiveChat
           activeConversation={activeConversation}

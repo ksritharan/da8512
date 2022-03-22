@@ -17,11 +17,29 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const Chat = ({ conversation, setActiveChat }) => {
+const Chat = ({ conversation, setActiveChat, readConvo }) => {
   const classes = useStyles();
   const { otherUser } = conversation;
 
+
+  const sendReadConvo = async (conversation) => {
+    try {
+      const unreadMessageIds = conversation.messages.filter(msg => !msg.wasSeen && msg.senderId === otherUser.id)
+                                                    .map(msg => msg.id);
+      const reqBody = {
+        messageIds: unreadMessageIds
+      };
+      await readConvo(reqBody);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleClick = async (conversation) => {
+    if (conversation.notificationCount > 0) {
+      await sendReadConvo(conversation);
+      conversation.notificationCount = 0;
+    }
     await setActiveChat(conversation.otherUser.username);
   };
 
