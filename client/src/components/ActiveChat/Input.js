@@ -15,7 +15,7 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const Input = ({ otherUser, conversationId, user, postMessage }) => {
+const Input = ({ otherUser, conversationId, user, postMessage, readConvo, conversation }) => {
   const classes = useStyles();
   const [text, setText] = useState('');
 
@@ -36,6 +36,18 @@ const Input = ({ otherUser, conversationId, user, postMessage }) => {
     };
     setText('');
     await postMessage(reqBody);
+    if (conversationId && conversation.notificationCount > 0) {
+      try {
+        const body = {
+          conversationId,
+          senderId: user.id
+        };
+        await readConvo(body);
+        conversation.notificationCount = 0;
+      } catch (error) {
+        console.error(error);
+      }
+    }
   };
 
   return (
