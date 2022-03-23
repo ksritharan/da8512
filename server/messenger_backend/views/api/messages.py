@@ -1,5 +1,7 @@
 from django.contrib.auth.middleware import get_user
 from django.http import HttpResponse, JsonResponse
+from django.db.models.query import Prefetch
+from django.db import transaction
 from messenger_backend.models import Conversation, Message
 from online_users import online_users
 from rest_framework.views import APIView
@@ -57,10 +59,24 @@ class Messages(APIView):
                 return HttpResponse(status=401)
 
             body = request.data
-            message_ids = body.get('messageIds')
-            Message.objects.filter(id__in=message_ids).update(wasSeen=True)
+            conversation_id = body.get('conversationId')
 
-            return HttpResponse(status=204)
+            conversation = Conversation.objects.filter(id=conversation_id).first()
+            
+            if user.id != conversation.user1.id and user.id != conversation.user2.id:
+                return HttpResponse(status=401)
+
+            with transaction.atomic():
+                (Message.objects.filter(conversation__id=conversation_id)
+                                .exclude(senderId=user.id)
+                                .exclude(wasSeen=True)
+                ).update(wasSeen=True)
+            last_seen_message = (Message.objects.filter(conversation__id=conversation_id, wasSeen=True)
+                                                .exclude(senderId=user.id)
+                                                .order_by('-createdAt')
+                                                .first())
+            
+            return JsonResponse({"lastSeenMessageId": last_seen_message.id})
         except Exception as e:
             return HttpResponse(status=500)
 

@@ -1,5 +1,5 @@
 from django.contrib.auth.middleware import get_user
-from django.db.models import Max, Q
+from django.db.models import Q
 from django.db.models.query import Prefetch
 from django.http import HttpResponse, JsonResponse
 from messenger_backend.models import Conversation, Message
