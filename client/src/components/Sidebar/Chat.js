@@ -17,17 +17,15 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const Chat = ({ conversation, setActiveChat, readConvo }) => {
+const Chat = ({ conversation, setActiveChat, readConvo, user }) => {
   const classes = useStyles();
   const { otherUser } = conversation;
 
-
   const sendReadConvo = async (conversation) => {
     try {
-      const unreadMessageIds = conversation.messages.filter(msg => !msg.wasSeen && msg.senderId === otherUser.id)
-                                                    .map(msg => msg.id);
       const reqBody = {
-        messageIds: unreadMessageIds
+        conversationId: conversation.id,
+        senderId: user.id
       };
       await readConvo(reqBody);
     } catch (error) {
