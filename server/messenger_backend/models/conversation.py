@@ -6,5 +6,6 @@ from .user import User
 
 
 class Conversation(utils.CustomModel):
+    users = models.ManyToManyField(User)
     createdAt = models.DateTimeField(auto_now_add=True, db_index=True)
     updatedAt = models.DateTimeField(auto_now=True)
