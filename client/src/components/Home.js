@@ -76,6 +76,27 @@ const Home = ({ user, logout }) => {
     }
   };
 
+  const readConvo = async (body) => {
+    // refs #5
+    // for future can add code for socket.emit
+    // and the function should update
+    // - conversations.notificationCount
+    // - otherUser.lastmessageReadId
+    // - we should also send this request when a message is sent
+    //  and notificationCount > 0
+    try {
+      const data = await axios.patch("/api/messages", body);
+      const sockBody = {...body, ...data};
+      sendReadConvo(sockBody);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const sendReadConvo = (body) => {
+    socket.emit("read-convo", body);
+  };
+
   const addNewConvo = useCallback(
     (recipientId, message) => {
       setConversations((prev) =>
@@ -85,7 +106,26 @@ const Home = ({ user, logout }) => {
             convoCopy.messages = [...convo.messages, message];
             convoCopy.latestMessageText = message.text;
             convoCopy.id = message.conversationId;
-            return convoCopy
+            return convoCopy;
+          } else {
+            return convo;
+          }
+        }),
+      );
+    },
+    [setConversations],
+  );
+
+  const updateReadConvo = useCallback (
+    (data) => {
+      const { conversationId, senderId, lastSeenMessageId } = data;
+      setConversations((prev) => 
+        prev.map((convo) => {
+          if (convo.id === conversationId && convo.otherUser.id === senderId) {
+            const convoCopy = { ...convo };
+            convoCopy.otherUser = { ...convo.otherUser };
+            convoCopy.otherUser.lastSeenMessageId = lastSeenMessageId;
+            return convoCopy;
           } else {
             return convo;
           }
@@ -104,6 +144,7 @@ const Home = ({ user, logout }) => {
           id: message.conversationId,
           otherUser: sender,
           messages: [message],
+          notificationCount: 0,
         };
         newConvo.latestMessageText = message.text;
         setConversations((prev) => [newConvo, ...prev]);
@@ -115,6 +156,11 @@ const Home = ({ user, logout }) => {
             const convoCopy = { ...convo };
             convoCopy.messages = [...convo.messages, message];
             convoCopy.latestMessageText = message.text;
+            if (message.senderId === convo.otherUser.id) {
+              //method was called via socket
+              //update the notification count
+              convoCopy.notificationCount += 1;
+            }
             return convoCopy;
           } else {
             return convo;
@@ -164,6 +210,7 @@ const Home = ({ user, logout }) => {
     socket.on("add-online-user", addOnlineUser);
     socket.on("remove-offline-user", removeOfflineUser);
     socket.on("new-message", addMessageToConversation);
+    socket.on("read-convo", updateReadConvo);
 
     return () => {
       // before the component is destroyed
@@ -171,8 +218,9 @@ const Home = ({ user, logout }) => {
       socket.off("add-online-user", addOnlineUser);
       socket.off("remove-offline-user", removeOfflineUser);
       socket.off("new-message", addMessageToConversation);
+      socket.off("read-convo", updateReadConvo);
     };
-  }, [addMessageToConversation, addOnlineUser, removeOfflineUser, socket]);
+  }, [addMessageToConversation, addOnlineUser, removeOfflineUser, updateReadConvo, socket]);
 
   useEffect(() => {
     // when fetching, prevent redirect
@@ -218,12 +266,14 @@ const Home = ({ user, logout }) => {
           clearSearchedUsers={clearSearchedUsers}
           addSearchedUsers={addSearchedUsers}
           setActiveChat={setActiveChat}
+          readConvo={readConvo}
         />
         <ActiveChat
           activeConversation={activeConversation}
           conversations={conversations}
           user={user}
           postMessage={postMessage}
+          readConvo={readConvo}
         />
       </Grid>
     </>

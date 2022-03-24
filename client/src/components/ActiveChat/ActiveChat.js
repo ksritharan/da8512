@@ -24,6 +24,7 @@ const ActiveChat = ({
   conversations,
   activeConversation,
   postMessage,
+  readConvo,
 }) => {
   const classes = useStyles();
 
@@ -58,6 +59,8 @@ const ActiveChat = ({
                   conversationId={conversation.id || null}
                   user={user}
                   postMessage={postMessage}
+                  readConvo={readConvo}
+                  conversation={conversation}
                 />
               </>
             )}
